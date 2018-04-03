@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="game.css">
+    </head>
+    <body onload="startDemo()" onkeydown="movePC(event)">
+        <canvas id="animate"></canvas>
+        <script>
+            var timer;
+            var started = false;
+            var haveFruit = false;
+            var haveMagazine = false;
+            var haveDictionary = false;
+            var canWidth = 640;
+            var canHeight = 640;
+            
+            var x=224;
+            var y=432;
+            
+            var trackDown = 0;
+            var trackUp = 3;
+            var trackLeft = 1;
+            var trackRight = 2;
+            
+            var srcX;
+            var srcY= 0;
+            
+            var sheetWidth = 128;
+            var sheetHeight = 192;
+            
+            var cols = 4;
+            var rows = 4;
+            
+            var width = sheetWidth / cols;
+            var height = sheetHeight/rows;
+            
+            var currentFrame = -1;
+
+            var pcSprite = new Image();
+            pcSprite.src = "trchar025.png";
+
+            var canvas = document.getElementById("animate");
+            canvas.width = canWidth;
+            canvas.height = canHeight;
+            canvas.style.backgroundImage = "url(\"FieldSE.jpg\")";
+            
+            var ctx = canvas.getContext('2d');
+            
+            function updateFrame(){
+                currentFrame = ++ currentFrame % cols;
+                
+                srcX = currentFrame * width;
+                ctx.clearRect(0, 0, canWidth, canHeight);
+            }
+            function drawimage(){
+                updateFrame();
+                switch(srcY / height){
+                    case 0:{//down
+                        if(y<592){
+                            y+=16;
+                        }
+                        break;
+                    }
+                    case 1:{//left
+                        if(x>0)
+                            x-=16;
+                        break;
+                    }
+                    case 2:{//right
+                        if(x<608)
+                            x+=16;
+                        break;
+                    }
+                    case 3:{//up
+                        if(y>0)
+                            y-=16;
+                        break;
+                    }
+                }
+                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+            }
+            function changeDirection(event){
+                var code= event.keyCode;
+                switch(code){
+                    case 37:{
+                        srcY = trackLeft * height;
+                        break;
+                    }
+                    case 38:{
+                        srcY = trackUp * height;
+                        break;
+                    }
+                    case 39:{
+                        srcY = trackRight * height;
+                        break;
+                    }
+                    case 40:{
+                        srcY = trackDown * height;
+                        break;
+                    }
+                    case 88:{
+                        console.log("X= "+x+", Y="+y);
+                        break;
+                    }
+                    default:{
+                        break;
+                    }
+                }
+                ctx.clearRect(0,0,canWidth, canHeight);
+                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+            }
+            function movePC(event){
+                changeDirection(event);
+                var code= event.keyCode;
+                window.clearTimeout(timer);
+                if(boundaryCheck(code)){
+                    switch(code){
+                        case 37:{
+                            drawimage();
+                            timer = setTimeout(drawimage, 200);
+                            break;
+                        }
+                        case 38:{
+                            drawimage();
+                            timer = setTimeout(drawimage, 200);
+                            break;
+                        }
+                        case 39:{
+                            drawimage();
+                            timer = setTimeout(drawimage, 200);
+                            break;
+                        }
+                        case 40:{
+                            drawimage();
+                            timer = setTimeout(drawimage, 200);
+                            break;
+                        }
+                        case 90:{
+                            interactCheck();
+                            break;
+                        }
+                        case 83:{
+                            saveGame();
+                            break;
+                        }
+                        case 67:{
+                            if(confirm("Do you really want to reset the game and start over?")){
+                                resetGame();
+                                saveGame();
+                                ctx.clearRect(0,0,canWidth, canHeight);
+                                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                            }
+                        }
+                        default:{
+                            break;
+                        }
+                    }
+                    if(currentFrame % 2 == 0 && (code >=37 && code <=40))
+                        if(boundaryCheck(code)){
+                            drawimage();
+                        }
+                }
+            }
+            function startDemo(){
+                drawimage();
+                y-=16;
+                loadGame();
+                ctx.clearRect(0,0,canWidth, canHeight);
+                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+            }
+            function boundaryCheck(code){
+                if(canvas.style.backgroundImage == "url(\"FieldSE.jpg\")"){
+                    //check the back wall of Prof. Oak's Arch
+                    //approach from the left
+                    if(code == 39 && x>=96 && x<=320 && y>=208 && y<=304){
+                        return false;
+                    }
+                    //approach from the right
+                    else if(code == 37 && x>=128 && x<=352 && y>=208 && y<=304){
+                        return false;
+                    }
+                    //approach from the top
+                    else if(code == 40 && x>=128 && x<=320 && y>=176 && y<=304){
+                        return false;
+                    }
+                    //approach from the bottom
+                    else if(code == 38 && x>=128 && x<=320 && y>=208 && y<=336){
+                        return false;
+                    }
+                    
+                    //check left wall of Prof. Oak's arch platform x= 160, y = (336,368)
+                    //approach from the left
+                    else if(code == 39 && x == 128 && y>=336 && y<=368){
+                        return false;
+                    }
+                    //approach from the right
+                    else if(code == 37 && x == 192&& y>=336 && y<=368){
+                        return false;
+                    }
+                    //approach from the bottom
+                    else if(code == 38 && x == 160 && y==400){
+                        return false;
+                    }
+                    
+                    //check right wall of Prof. Oak's arch platform x =288, y=(336,368)
+                    //approach from the left
+                    else if(code == 39 && x == 256 && y>=336 && y<=368){
+                        return false;
+                    }
+                    //approach from the right
+                    else if(code == 37 && x == 320 && y>=336 && y<=368){
+                        return false;
+                    }
+                    //approach from the bottom
+                    else if(code == 38 && x == 288 && y==400){
+                        return false;
+                    }
+                    
+                    //check for Prof. Oak x=224 , y=336
+                    //approach from left
+                    else if(code == 39 && x ==192 && y == 336){
+                        return false;
+                    }
+                    //approach from right
+                    else if (code == 37 && x == 256 && y == 336){
+                        return false;
+                    }
+                    //approach from the bottom
+                    else if(code == 38 && x == 224 && y == 368){
+                        return false;
+                    }
+                    
+                    //check the treeline
+                    else if(code == 37 && x == 64){
+                        return false;
+                    }
+                    else if(code == 40 && y == 528){
+                        return false;
+                    }
+                    
+                    //handle border transitions
+                    else if(code == 39 && x == 608){
+                        canvas.style.backgroundImage = "url(\"FieldSW.jpg\")";
+                        x=0;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else if (code == 38 && y == 16){
+                        canvas.style.backgroundImage = "url(\"FieldNE.jpg\")";
+                        y=592;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+                else if(canvas.style.backgroundImage == "url(\"FieldSW.jpg\")"){
+                    //check the berry tree and soil
+                    //from the left
+                    if(code == 39 && x == 480 && y == 528){
+                        return false;
+                    }
+                    else if(code == 40 && x >= 512 && x <= 544 && y == 496){
+                        return false;
+                    }
+                    //check the treeline
+                    else if(code == 40 && y == 528){
+                        return false;
+                    }
+                    else if(code == 39 && x == 544){
+                        return false;
+                    }
+                    //handle border transitions
+                    else if( code == 38 && y == 16){
+                        canvas.style.backgroundImage = "url(\"FieldNW.jpg\")";
+                        y = 592;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else if(code == 37 && x == 0){
+                        canvas.style.backgroundImage = "url(\"FieldSE.jpg\")";
+                        x = 608;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+                else if(canvas.style.backgroundImage == "url(\"FieldNE.jpg\")"){
+                    //check treeline
+                    if(code == 37 && x == 64){
+                        return false;
+                    }
+                    else if(code == 38 && y == 16){
+                        return false;
+                    }
+                    //check the dictionary guy
+                    else if(code == 37 && x == 96 && y == 16){
+                        return false;
+                    }
+                    else if(code == 38 && x == 64 && y == 48){
+                        return false;
+                    }
+                    //handle border transitions
+                    else if(code == 39 && x == 608){
+                        canvas.style.backgroundImage = "url(\"FieldNW.jpg\")";
+                        x=0;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else if(code == 40 && y == 592){
+                        canvas.style.backgroundImage = "url(\"FieldSE.jpg\")";
+                        y=16;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+                else if(canvas.style.backgroundImage == "url(\"FieldNW.jpg\")"){
+                    //check treeline
+                    if(code == 38 && y == 16){
+                        return false;
+                    }
+                    else if(code == 39 && x == 544){
+                        return false;
+                    }
+                    
+                    //check house walls
+                    //from the left
+                    else if(code == 39 && x == 224 && y <= 112 && y >= 16){
+                        return false;
+                    }
+                    //from the right
+                    else if(code == 37 && x == 416 && y <= 112 && y >= 16){
+                        return false;
+                    }
+                    //from below
+                    else if(code == 38 && (x == 256 || (x >= 320 && x <= 384)) && y == 144){
+                        return false;
+                    }
+                    //handle border/map transitions
+                    else if(code == 38 && x == 288 && y == 144){
+                        canvas.style.backgroundImage = "url(\"House.jpg\")";
+                        x = 288;
+                        y = 528;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                       }
+                       else if(code == 37 && x == 0){
+                        canvas.style.backgroundImage = "url(\"FieldNE.jpg\")";
+                        x=608;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else if(code == 40 && y == 592){
+                        canvas.style.backgroundImage = "url(\"FieldSW.jpg\")";
+                        y = 16;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else
+                        return true;
+                }
+                else if(canvas.style.backgroundImage == "url(\"House.jpg\")"){
+                    //check walls
+                    //top wall
+                    if(code == 38 && x >= 64 && x <= 512 && y == 176){
+                        return false;
+                    }
+                    //left wall
+                    else if(code == 37 && x == 64 && y >= 176 && y <= 528){
+                        return false;
+                    }
+                    //right wall
+                    else if(code == 39 && x == 512 && y >= 176 && y <= 528){
+                        return false;
+                    }
+                    //bottom wall
+                    else if (code == 40 && ((x >= 64 && x <= 256) || (x >= 320 && x <= 512)) && y == 528){
+                        return false;
+                    }
+                    
+                    //check desk and couch
+                    //from below
+                    else if(code == 38 && x >= 224 && x <= 320 && y == 368){
+                        return false;
+                    }
+                    //from left side
+                    else if(code == 39 && x == 192 && y >= 304 && y <= 336){
+                        return false;
+                    }
+                    else if(code == 37 && x == 352 && y >= 304 && y <= 336){
+                        return false;
+                    }
+                    //from above
+                    else if(code == 40 && x >= 224 && x <= 320 && y == 272){
+                        return false;
+                    }
+                    //handle doormat
+                    else if(code == 40 && x == 288 && y == 528){
+                        canvas.style.backgroundImage = "url(\"FieldNW.jpg\")";
+                        x = 288;
+                        y = 144;
+                        ctx.clearRect(0,0,canWidth, canHeight);
+                        ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                        return false;
+                    }
+                    else
+                        return true;
+                }
+                else
+                    return true;
+            }
+            function interactCheck(){
+                if(canvas.style.backgroundImage == "url(\"FieldSE.jpg\")"){
+                    if(x==224 && y==368 && srcY==height * 3){
+                            if(!started){
+                                if(confirm("\"Hello, my name is Professor Oak!\nI usually welcome people to the world of " +
+                                           "Pokemon,\nbut today I have a special quest for you.\n Would you like to hear what it is?\""))
+                                {
+                                    if(confirm("\"The truth of the matter is that it's not really a quest at all...\n"+
+                                               "Really, I just need some errands run. If you could grab me some fresh\n"+
+                                               "fruit, and retrieve a couple of my personal items from my colleagues,\n"+ 
+                                               "I promise to make it worth your while!\"")){
+                                        alert("\"Oh, thank you so much, young man! My colleagues shouldn't be far\n"+
+                                              "from here, and I think I saw some fresh fruit on a tree to the East.\n"+
+                                              "Come back after you've gotten all three items.\"");
+                                        started = true;
+                                    }
+                                    else{
+                                        alert("\"Well, feel free to come back when you're in a more helpful mood.\n"+
+                                              "I'll wait all day if I have to...\"");
+                                    }
+                                }
+                                else{
+                                    alert("\"Well, talk to me again if you'd like to hear more.\"")
+                                }
+                            }
+                            else if(haveFruit && haveMagazine && haveDictionary){
+                                alert("\"Oh, thank you so much, young man! I was feeling a little hungry,\n"+
+                                     "and my books had been lent out for far too long.\"");
+                                alert("\"Are you waiting for a reward? Oh, that's right, I did promise you\n"+
+                                     "something good, didn't I? Well, I happen to have a computer tip for you.\n"+
+                                     "If you right-click on a webpage, you can inspect it's HTML source file!\"");
+                                alert("\"O-oh... That wasn't quite what you were expecting? Well, sorry about\n"+
+                                     "that... As you can see, I'm away from my lab, so I don't have anything\n"+
+                                     "else to give you at the moment.\"");
+                            }
+                            else{
+                                alert("\"Hmm? Is something the matter? You don't seem to have all the items "+
+                                     "I asked you to grab for me. Now, let's see:\"");
+                                if(!haveFruit)
+                                    alert("\"There should be a fruit tree in the clearing to the East of here. "+
+                                         "If I remember correctly, it has yellow fruit.\"");
+                                if(!haveMagazine)
+                                    alert("\"The fellow who borrowed my magazine has a house not far from here, "+
+                                         "in a clearing to the Northeast. You should be able to find him there.\"");
+                                if(!haveDictionary)
+                                    alert("\"The man that borrowed my dictionary walked off to the north. He's\n"+
+                                         "wearing white, and has brown hair.\"");
+                            }
+                                
+                            
+                        }
+                    else if((x==192 && y==336 && srcY == height * 2) || (x == 256 && y == 336 && srcY == height))
+                        alert("Please stand in front of this character to interact with them.");
+                    else if(!started){
+                        alert("An older man is standing under an ornate arch, looking around as if he's waiting "+
+                             "for someone or something. Maybe you should talk to him?");
+                    }
+                    else if(!haveDictionary || !haveFruit || !haveMagazine){
+                        alert("Prof. Oak is waiting on me. I'm not sure where to go to find his possessions or find him a snack, though. "+
+                             "Maybe he'll give me some more descriptive directions if I talk to him again?");
+                    }
+                        
+                }
+                else if(canvas.style.backgroundImage == "url(\"FieldSW.jpg\")"){
+                    if(x==512 && y == 496 && srcY == 0){
+                        if(started && !haveFruit){
+                            if(confirm("There is a large, juicy-looking fruit on the tree.\n"+
+                                      "Do you want to take it and give it to Prof. Oak?")){
+                                alert("The fruit feels ripe in your hand as you pluck it from "+
+                                     "the branch. It's all you can do to not eat it yourself.");
+                                haveFruit = true;
+                            }
+                            else{
+                                alert("Better leave it there, it might belong to someone else...\n"+
+                                     "On the other hand, though, it does look like a wild tree...");
+                            }
+                        }
+                        else if (!started){
+                            alert("This fruit tree, despite its size, appears to be in good health.");
+                        }
+                        else{
+                            alert("This is the tree you picked the fruit from. It doesn't look like "+
+                                 "anything's grown back yet. Better get back to those errands!");
+                        }
+                    }
+                    else if(!started || !haveFruit){
+                        alert("This open field is empty, besides a small fruit tree off in the corner, " + 
+                              "which has a single ripe fruit on it.");
+                    }
+                    else{
+                        alert("This is the clearing where I came to get the fruit. Better finish my errands.");
+                    }
+                }
+                else if(canvas.style.backgroundImage == "url(\"FieldNE.jpg\")"){
+                    if(x==64 && y==48 && srcY == height * 3){
+                        if(started && !haveDictionary){
+                            if(confirm("\"Oh, hello. I was just studying this dictionary.\n"+
+                               "Can I help you?\"")){
+                                alert("\"Prof. Oak wants his dictionary back? Oh, okay, then.\n"+
+                                      "Here you go. Tell him thanks for me, would you?\"");
+                                haveDictionary = true;
+                            }
+                            else{
+                                alert("\"Well, then what are you bothering me about?\n"+
+                                      "Can't you see I'm reading the dictionary? Its actually\n"+
+                                      "rather fascinating, believe it or not.\"");
+                            }
+                        }
+                        else if(!started){
+                            alert("\"What is it, young man? I'm busy learning new words such as superfluous "+
+                                  "and incessant. Leave me to my studies, please.\"");
+                        }
+                        else{
+                            alert("\"Oh, it's you again. I already gave you Prof. Oak's Dictionary." +
+                                 "\nI don't have anything else to give you right now, so run along.\"");
+                        }
+
+                    }
+                    else if(x==96 && y == 16 && srcY == height){
+                        alert("Please stand in front of this character to interact with them.");
+                    }
+                    else if(!started && !haveDictionary){
+                        alert("There's a man in this clearing that seems to be deep in his reading. "+
+                             "It looks like the book he's reading is pretty big, something that you'd use "+
+                             "for research.");
+                    }
+                    else if(!haveDictionary){
+                        alert("The man in this clearing is reading a heavy tome of a book. "+
+                             "I think the cover says... 'Dictionary'?");
+                    }
+                    else{
+                        alert("The bookish man in this clearing was the one borrowing Prof. Oak's dictionary.");
+                    }
+                }
+                else if(canvas.style.backgroundImage == "url(\"FieldNW.jpg\")"){
+                    if(!started && !haveMagazine){
+                        alert("This clearing has a small house nestled in the trees. "+
+                             "It's not polite to enter others' houses without an invitation.");
+                    }
+                    else if(!haveMagazine){
+                        alert("Prof. Oak said his colleagues weren't far from where he was waiting. "+
+                             "Maybe one of his colleagues lives in this house?");
+                    }
+                    else{
+                        alert("This is the house of that man who was borrowing Prof. Oak's magazine. "+
+                             "He's a little rough around the edges, but nice enough once you get to know him.")
+                    }
+                }
+                else if(canvas.style.backgroundImage == "url(\"House.jpg\")"){
+                    if(x==224 && y==368 && srcY == height * 3){
+                        if(started && !haveMagazine){
+                            if(confirm("\"Did you just walk into a random stranger's house, "+
+                                      "without so much as knocking?\"")){
+                                alert("\"Oh, Prof. Oak sent you? I guess I'll forgive your intrusion, then."+
+                                     "Here's the magazine Oak wanted back. It was a good read, talked about "+
+                                     "different computer programming ideologies. You might find it interesting yourself.\"");
+                                haveMagazine = true;
+                            }
+                            else{
+                                alert("\"Don't lie to me boy. Why don't you come back when "+
+                                     "you've learned some integrity?\"");
+                            }
+                        }
+                        else if(!started){
+                            alert("\"Are you lost, young man?\"");
+                        }
+                        else{
+                            alert("\"So you've come back, my little interloper! I don't have anything to give you "+
+                                 "anymore, so you may as well finish up with your errands for the professor.");
+                        }
+                    }
+                    else if(!started && !haveMagazine){
+                        alert("I've got the feeling that I'm not welcome here... I should probably leave and find something productive to do.");
+                    }
+                    else if(started && !haveMagazine){
+                        alert("The man on the couch barely acknowledged my coming in. I still don't feel welcome, but maybe the magazine he's "+
+                             "reading belongs to Prof. Oak?");
+                    }
+                    else{
+                        alert("This is the man that was borrowing Prof. Oak's magazine. He's not so bad when you get to know him, though.");
+                    }
+                }
+            }
+            function Game(){
+                this.x = x;
+                this.y = y;
+                this.srcY = srcY;
+                this.started = started;
+                this.haveDictionary = haveDictionary;
+                this.haveMagazine = haveMagazine;
+                this.haveFruit = haveFruit
+                this.location = canvas.style.backgroundImage;
+            }
+            function saveGame(){
+                var state = new Game();
+                var stateStr = JSON.stringify(state);
+                window.localStorage.setItem("gameSave", stateStr);
+                return;
+            }
+            function loadGame(){
+                if(window.localStorage.getItem("gameSave"))
+                    var savedState = JSON.parse(window.localStorage.getItem("gameSave"));
+                x = savedState.x;
+                y = savedState.y;
+                srcY = savedState.srcY;
+                started = savedState.started;
+                haveDictionary = savedState.haveDictionary;
+                haveMagazine = savedState.haveMagazine;
+                haveFruit = savedState.haveFruit;
+                canvas.style.backgroundImage = savedState.location;
+                return;
+            }
+            function resetGame(){
+                x = 224;
+                y=432;
+                srcY = 0;
+                started = false;
+                haveDictionary = false;
+                haveMagazine = false;
+                haveFruit = false;
+                canvas.style.backgroundImage = "url(\"FieldSE.jpg\")";
+                return;
+            }
+        </script>
+        <div id = "instructions">
+            <h3>Instructions</h3>
+            <p>Hi! Thanks for playing my short little game! The goal of the game 
+            is to retrieve several important items for <img src="ProfOak.png" alt="Prof. Oak" width="28" height="40"> 
+            and return them to him.</p>
+            <h3>Controls</h3>
+            <img class="movementKeys" src="arrowkeys.jpg" alt="Movement is governed by the arrow keys." width="120" height="80" >
+            <p class="labelText">Movement</p>
+            <img class="instructionKeys" src="letter-uppercase-Z-icon.png" alt="To interact with another character, or to receive a hint about your current area, press the 'Z' key." width="40" height="40">
+            <p class="labelText">Interact/Get Hint</p>
+            <img class="instructionKeys" src="letter-uppercase-S-icon.png" alt="To save your game state/progress, press the 'S' key." width="40" height="40">
+            <p class="labelText">Save Current Game State</p>
+            <img class="instructionKeys" src="letter-uppercase-C-icon.png" alt="To reset your game and erase your save data, press the 'C' key." width="40" height="40">
+            <p class="labelText">Reset</p>
+        </div>
+    </body>
+</html>

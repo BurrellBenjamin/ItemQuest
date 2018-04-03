@@ -1,0 +1,30 @@
+#animate {
+    position: relative;
+    left: 25%;
+    outline: darkgreen solid;
+    display: inline;
+    background-position: top left;
+    background-color: black;
+    width:640px;
+    height: 640px;
+}
+#instructions{
+    position:absolute;
+    top:0px;
+    width: 20%;
+    border: 3px solid black;
+}
+h3{
+    text-align: center;
+}
+.instructionKeys{
+    position:relative;
+    left: 42%;
+}
+.movementKeys{
+    position: relative;
+    left:20%;
+}
+.labelText{
+    text-align: center;
+}
