@@ -84,10 +84,7 @@
                     }
                 }
                 drawimage();
-                if(timer%2 ==0)
-                    timer--;
-                else
-                    timer++;
+                inputLock+=0.5;
             }
             function changeDirection(event){                      
                 var code= event.keyCode;
@@ -166,9 +163,6 @@
                         }
                         //if((srcX/width) % 2 == 1 && (code >=37 && code <=40))
                     }
-               }
-               else{
-                   inputLock = timer;
                }
             }
             function startDemo(){
