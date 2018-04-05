@@ -84,7 +84,10 @@
                     }
                 }
                 drawimage();
-                timer--;
+                if(timer%2 ==0)
+                    timer--;
+                else
+                    timer++;
             }
             function changeDirection(event){                      
                 var code= event.keyCode;
