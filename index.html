@@ -2,12 +2,14 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <title>Item Quest</title>
         <link rel="stylesheet" href="game.css">
     </head>
     <body onload="startDemo()" onkeydown="movePC(event)">
         <canvas id="animate"></canvas>
         <script>
-            var timer;
+            var timer = 1;
+            var inputLock =1;
             var started = false;
             var haveFruit = false;
             var haveMagazine = false;
@@ -55,6 +57,9 @@
             }
             function drawimage(){
                 updateFrame();
+                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+            }
+            function step(){
                 switch(srcY / height){
                     case 0:{//down
                         if(y<592){
@@ -78,9 +83,10 @@
                         break;
                     }
                 }
-                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                drawimage();
+                inputLock+=0.5;
             }
-            function changeDirection(event){
+            function changeDirection(event){                      
                 var code= event.keyCode;
                 switch(code){
                     case 37:{
@@ -107,64 +113,60 @@
                         break;
                     }
                 }
-                ctx.clearRect(0,0,canWidth, canHeight);
-                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
             }
             function movePC(event){
-                changeDirection(event);
-                var code= event.keyCode;
-                window.clearTimeout(timer);
-                if(boundaryCheck(code)){
-                    switch(code){
-                        case 37:{
-                            drawimage();
-                            timer = setTimeout(drawimage, 200);
-                            break;
-                        }
-                        case 38:{
-                            drawimage();
-                            timer = setTimeout(drawimage, 200);
-                            break;
-                        }
-                        case 39:{
-                            drawimage();
-                            timer = setTimeout(drawimage, 200);
-                            break;
-                        }
-                        case 40:{
-                            drawimage();
-                            timer = setTimeout(drawimage, 200);
-                            break;
-                        }
-                        case 90:{
-                            interactCheck();
-                            break;
-                        }
-                        case 83:{
-                            saveGame();
-                            break;
-                        }
-                        case 67:{
-                            if(confirm("Do you really want to reset the game and start over?")){
-                                resetGame();
+               if(timer == inputLock){
+                    changeDirection(event);
+                    var code= event.keyCode;
+                    window.clearTimeout(timer);
+                    if(boundaryCheck(code)){
+                        switch(code){
+                            case 37:{
+                                step();
+                                timer = setTimeout(step, 100);
+                                break;
+                            }
+                            case 38:{
+                                step();
+                                timer = setTimeout(step, 100);
+                                break;
+                            }
+                            case 39:{
+                                step();
+                                timer = setTimeout(step, 100);
+                                break;
+                            }
+                            case 40:{
+                                step();
+                                timer = setTimeout(step, 100);
+                                break;
+                            }
+                            case 90:{
+                                interactCheck();
+                                break;
+                            }
+                            case 83:{
                                 saveGame();
-                                ctx.clearRect(0,0,canWidth, canHeight);
-                                ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                                break;
+                            }
+                            case 67:{
+                                if(confirm("Do you really want to reset the game and start over?")){
+                                    resetGame();
+                                    saveGame();
+                                    ctx.clearRect(0,0,canWidth, canHeight);
+                                    ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
+                                }
+                            }
+                            default:{
+                                break;
                             }
                         }
-                        default:{
-                            break;
-                        }
+                        //if((srcX/width) % 2 == 1 && (code >=37 && code <=40))
                     }
-                    if(currentFrame % 2 == 0 && (code >=37 && code <=40))
-                        if(boundaryCheck(code)){
-                            drawimage();
-                        }
-                }
+               }
             }
             function startDemo(){
                 drawimage();
-                y-=16;
                 loadGame();
                 ctx.clearRect(0,0,canWidth, canHeight);
                 ctx.drawImage(pcSprite, srcX, srcY, width, height, x, y, width, height);
@@ -232,10 +234,10 @@
                     }
                     
                     //check the treeline
-                    else if(code == 37 && x == 64){
+                    else if(code == 37 && x <= 64){
                         return false;
                     }
-                    else if(code == 40 && y == 528){
+                    else if(code == 40 && y >= 528){
                         return false;
                     }
                     
@@ -625,16 +627,17 @@
                 return;
             }
             function loadGame(){
-                if(window.localStorage.getItem("gameSave"))
+                if(window.localStorage.getItem("gameSave")){
                     var savedState = JSON.parse(window.localStorage.getItem("gameSave"));
-                x = savedState.x;
-                y = savedState.y;
-                srcY = savedState.srcY;
-                started = savedState.started;
-                haveDictionary = savedState.haveDictionary;
-                haveMagazine = savedState.haveMagazine;
-                haveFruit = savedState.haveFruit;
-                canvas.style.backgroundImage = savedState.location;
+                    x = savedState.x;
+                    y = savedState.y;
+                    srcY = savedState.srcY;
+                    started = savedState.started;
+                    haveDictionary = savedState.haveDictionary;
+                    haveMagazine = savedState.haveMagazine;
+                    haveFruit = savedState.haveFruit;
+                    canvas.style.backgroundImage = savedState.location;
+                }            
                 return;
             }
             function resetGame(){
